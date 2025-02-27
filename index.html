@@ -1,20 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <title>我的第一个网页</title>
+    <meta charset="UTF-8">
+    <title>合同金额计算器</title>
     <style>
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-size: 3em;
-            background-color: #f0f0f0;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .calculator {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .capital-text {
+            color: #666;
+            margin-left: 10px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h1>Hi, world! 👋</h1>
+    <div class="calculator">
+        <h2>合同金额计算器</h2>
+        
+        <div class="input-group">
+            <label>税率选择：</label>
+            <select id="taxRate" onchange="calculate()">
+                <option value="13" selected>13%</option>
+                <option value="6">6%</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>合同总金额（小写）：</label>
+            <input type="number" id="totalAmount" oninput="calculate()">
+            <span class="capital-text" id="totalAmountCapital"></span>
+        </div>
+
+        <div class="input-group">
+            <label>合同无税金额（小写）：</label>
+            <input type="number" id="amountWithoutTax" readonly>
+            <span class="capital-text" id="amountWithoutTaxCapital"></span>
+        </div>
+
+        <div class="input-group">
+            <label>税额（小写）：</label>
+            <input type="number" id="taxAmount" readonly>
+            <span class="capital-text" id="taxAmountCapital"></span>
+        </div>
+    </div>
+
+    <script>
+        // 数字转中文大写
+        function numberToChinese(num) {
+            const units = ['', '拾', '佰', '仟'];
+            const bigUnits = ['', '万', '亿'];
+            const decimals = ['角', '分'];
+            const numbers = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+            
+            let result = '';
+            let [integerPart, decimalPart] = num.toFixed(2).split('.').map(Number);
+            
+            // 处理整数部分
+            let unitIndex = 0;
+            let bigUnitIndex = 0;
+            while (integerPart > 0) {
+                let current = integerPart % 10;
+                if (current !== 0) {
+                    result = numbers[current] + units[unitIndex] + result;
+                } else {
+                    if (result[0] !== '零') result = '零' + result;
+                }
+                integerPart = Math.floor(integerPart / 10);
+                unitIndex++;
+                if (unitIndex === 4) {
+                    unitIndex = 0;
+                    result = bigUnits[bigUnitIndex] + result;
+                    bigUnitIndex++;
+                }
+            }
+            result += '元';
+
+            // 处理小数部分
+            if (decimalPart > 0) {
+                result += numbers[Math.floor(decimalPart / 10)] + decimals[0];
+                result += numbers[decimalPart % 10] + decimals[1];
+            } else {
+                result += '整';
+            }
+
+            return result.replace(/零+/g, '零').replace(/零元/g, '元').replace(/零万/g, '万');
+        }
+
+        // 主计算函数
+        function calculate() {
+            const taxRate = parseFloat(document.getElementById('taxRate').value) / 100;
+            const totalAmount = parseFloat(document.getElementById('totalAmount').value) || 0;
+
+            const amountWithoutTax = totalAmount / (1 + taxRate);
+            const taxAmount = totalAmount - amountWithoutTax;
+
+            // 更新小写金额
+            document.getElementById('amountWithoutTax').value = amountWithoutTax.toFixed(2);
+            document.getElementById('taxAmount').value = taxAmount.toFixed(2);
+
+            // 更新大写金额
+            document.getElementById('totalAmountCapital').textContent = numberToChinese(totalAmount);
+            document.getElementById('amountWithoutTaxCapital').textContent = numberToChinese(amountWithoutTax);
+            document.getElementById('taxAmountCapital').textContent = numberToChinese(taxAmount);
+        }
+
+        // 初始化计算
+        calculate();
+    </script>
 </body>
 </html>
